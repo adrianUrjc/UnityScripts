@@ -11,14 +11,18 @@ using UnityEditor;
 [Serializable]
 public class ALoader
 {
+    //TODO: Unificar nombre so y nombre json(para evitar problemas)
+    //Autobuscar directorio segun el so
+
     [Header("SO Path")]
     [SerializeField] protected string soPath = "Assets/Resources/LoadSystem/SavedFiles/";
+    [SerializeField] protected string baseName = "Game";
 
-    [SerializeField] protected string soName = "GroupValues.asset";
-
-    [Header("JSON")]
-    [SerializeField] protected string jsonFileName = "GameAssets.json";
-
+    protected string soName => baseName + ".asset";
+    protected string jsonFileName => baseName + ".json";
+    #if UNITY_EDITOR
+    private string resourcePath; 
+    #endif
     [SerializeField]
     [ExposedScriptableObject]
     protected GroupValues values;
@@ -27,8 +31,7 @@ public class ALoader
     ///</summary>
     public void ChangeAssetName(string newName)
     {
-        soName = newName + ".asset";
-        jsonFileName = newName + ".json";
+        baseName = newName;
     }
 
     // ---------------------------------------------------------------------------------------
@@ -102,7 +105,7 @@ public class ALoader
 
     public void SaveValues(GroupValues valuesToSave = null)
     {
-        if(values==null && valuesToSave==null)
+        if (values == null && valuesToSave == null)
         {
             Debug.LogWarning("[Loader] No values to save.");
             return;
@@ -237,6 +240,46 @@ public class ALoader
         if (values == null) return;
         values.ResetToDefaults();
     }
+    //////////////////////////////////////////////////////////
+    /// 
+   #if UNITY_EDITOR
+  // ruta dentro de Resources
+public bool AutoResolveFromResources()
+{
+    string[] guids = AssetDatabase.FindAssets($"t:GroupValues {baseName}");
+
+    foreach (var guid in guids)
+    {
+        string path = AssetDatabase.GUIDToAssetPath(guid);
+
+        // debe estar dentro de Resources
+        int resIndex = path.IndexOf("Resources/");
+        if (resIndex < 0) continue;
+
+        // cargar asset
+        var asset = AssetDatabase.LoadAssetAtPath<GroupValues>(path);
+        if (asset == null) continue;
+
+        values = asset;
+
+        // carpeta del SO
+        soPath = Path.GetDirectoryName(path).Replace("\\", "/") + "/";
+
+        // calcular resourcePath real
+        string insideResources = path.Substring(resIndex + "Resources/".Length);
+        resourcePath = Path.ChangeExtension(insideResources, null);
+
+        Debug.Log($"[ALoader] Auto-resuelto:");
+        Debug.Log($"SO Path: {soPath}");
+        Debug.Log($"Resources Path: {resourcePath}");
+
+        return true;
+    }
+
+    Debug.LogError($"[ALoader] No se encontró '{baseName}' dentro de Resources.");
+    return false;
+}
+#endif
 }
 
 // ---------------------------------------------------------------------------------------

@@ -8,6 +8,7 @@ public class LoaderMono : MonoBehaviour
 
    //Load
    [ContextMenu("Load Data")]
+     [Button("Load Data")]
    public void LoadData()
    {
       loader.LoadValues();
@@ -18,6 +19,7 @@ public class LoaderMono : MonoBehaviour
         return loader.LoadValues();
     }
    //Save
+     [Button("Save Data")]
     [ContextMenu("Save Data")]
     public void SaveData()
     {
@@ -28,6 +30,7 @@ public class LoaderMono : MonoBehaviour
         loader.SaveValues(values);
     }
    //Reset
+     [Button("Reset Data")]
     [ContextMenu("Reset Data")]
     public void ResetData()
     {
@@ -48,5 +51,11 @@ public class LoaderMono : MonoBehaviour
     public void SetValue<T>(string key, T value)
     {
         loader.SetValue(key, value);
+    }
+    [ContextMenu("AutoFindPathByName")]
+    [Button("AutoFindPathByName")]
+public void AutoFindPath()
+    {
+        loader.AutoResolveFromResources();
     }
 }

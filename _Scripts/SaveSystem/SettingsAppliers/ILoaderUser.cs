@@ -7,5 +7,9 @@ public interface ILoaderUser
 {
     
     public void SubscribeToValuesChange(); 
-    public void OnValuesChange();
+    private void LoadData(){}
+
+    
+
+
 }

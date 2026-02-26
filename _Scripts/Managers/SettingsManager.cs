@@ -38,10 +38,10 @@ public class SettingsManager : ASingleton<SettingsManager>, IManager, ISettingsC
     public void SetSettingsAppliers()
     {
        var settingsAppliers=FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ILoaderUser>();
-       foreach(var applier in settingsAppliers)
-        {
-            onSettingsChange.AddListener(applier.OnValuesChange);
-        }
+    //    foreach(var applier in settingsAppliers)
+    //     {
+    //         onSettingsChange.AddListener(applier.OnValuesChange);
+    //     }
     }
     public void OnStartGame()
     {

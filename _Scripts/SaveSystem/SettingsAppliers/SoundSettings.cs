@@ -3,35 +3,32 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Audio;
 
-public class SoundSettingsApplier : MonoBehaviour , ILoaderUser
+public class SoundSettingsApplier : MonoBehaviour, ILoaderUser
 {
     [SerializeField] private AudioMixer audioMixer; // Mixer general del proyecto
-
+    ISettingsContainer container;
     public void Init()
     {
+        SubscribeToValuesChange();
+
         ApplySoundSettings();
-       
     }
 
-    public void OnValuesChange()
-    {
-       ApplySoundSettings();
-    }
 
-    
+
 
     public void SubscribeToValuesChange()
     {
-        var container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+        container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
             .OfType<ISettingsContainer>()
             .FirstOrDefault();
-        container.SubscribeToSettingsChange(OnValuesChange);
-      
+        container.SubscribeToSettingsChange(ApplySoundSettings);
+
     }
 
     void ApplySoundSettings()
     {
-        if (SettingsManager.Instance.GetValue<bool>("Mute"))//si esta en silencio poner a 0
+        if (container.GetValue<bool>("Mute"))//si esta en silencio poner a 0
         {
             audioMixer.SetFloat("MasterVolume", -80f);
             audioMixer.SetFloat("MusicVolume", -80f);
@@ -39,10 +36,10 @@ public class SoundSettingsApplier : MonoBehaviour , ILoaderUser
             audioMixer.SetFloat("InterfaceVolume", -80f);
             return;
         }
-        float masterVol = SettingsManager.Instance.GetValue<float>("MasterVolume");
-        float musicVol = SettingsManager.Instance.GetValue<float>("MusicVolume");
-        float sfxVol = SettingsManager.Instance.GetValue<float>("SFXVolume");
-        float interfaceVolume = SettingsManager.Instance.GetValue<float>("InterfaceVolume");
+        float masterVol = container.GetValue<float>("MasterVolume");
+        float musicVol = container.GetValue<float>("MusicVolume");
+        float sfxVol = container.GetValue<float>("SFXVolume");
+        float interfaceVolume = container.GetValue<float>("InterfaceVolume");
 
         // Convierte de [0,1] lineal a dB (logar�tmico)
         audioMixer.SetFloat("MasterVolume", LinearToDecibel(masterVol));

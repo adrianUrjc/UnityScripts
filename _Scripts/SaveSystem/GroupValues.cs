@@ -21,7 +21,7 @@ public enum VALUE_TYPE
 [CreateAssetMenu(menuName = "ScriptableObject/GenericValues")]
 public partial class GroupValues : ScriptableObject
 {
-    
+
 
     //TODO: optimizar con diccionario, de momento no funciona bien
     // private Dictionary<string, SettingEntry> _cache;
@@ -49,14 +49,34 @@ public partial class GroupValues : ScriptableObject
     }
     public T GetValue<T>(string name)
     {
-           foreach (var field in fields)
+        foreach (var field in fields)
         {
             var entry = field.entries.Find(e => e.name == name);
             if (entry != null)
-                return (T)entry.value.GetValue();
+            {
+                object rawValue = entry.value.GetValue();
+
+                try
+                {
+                    if (rawValue is T tValue)
+                        return tValue;
+
+                    return (T)Convert.ChangeType(rawValue, typeof(T));
+                }
+                catch (Exception ex)
+                {
+                    string wanted = typeof(T).Name;
+                    string actual = rawValue != null ? rawValue.GetType().Name : "null";
+
+                    throw new InvalidCastException(
+                        $"Error de cast en GetValue: se intentó convertir de '{actual}' a '{wanted}' para la clave '{name}'.",
+                        ex);
+                }
+            }
         }
-        throw new KeyNotFoundException($"No se encontr� ning�n valor con el nombre '{name}' en los campos.");
-    
+
+        throw new KeyNotFoundException(
+            $"No se encontró ningún valor con el nombre '{name}' en los campos.");
     }
 
 
@@ -85,7 +105,7 @@ public partial class GroupValues : ScriptableObject
         else
             v = (T)Convert.ChangeType(v, typeof(T));
 
-          foreach (var field in fields)
+        foreach (var field in fields)
         {
             var entry = field.entries.Find(e => e.name == name);
             if (entry != null)
@@ -96,8 +116,8 @@ public partial class GroupValues : ScriptableObject
         }
         // Si quieres, aqu� podr�as lanzar excepci�n o log si no se encontr� el nombre
         Debug.LogError($"[GroupValues] No se encontr� ning�n valor con el nombre '{name}' en los campos.");
-                throw new KeyNotFoundException($"No se encontr� ning�n valor con el nombre '{name}' en los campos.");
-    
+        throw new KeyNotFoundException($"No se encontr� ning�n valor con el nombre '{name}' en los campos.");
+
 
 
     }

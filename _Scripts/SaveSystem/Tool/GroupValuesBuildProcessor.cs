@@ -5,35 +5,67 @@ using UnityEditor.Build.Reporting;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-
-public class GroupValuesBuildProcessor : IPreprocessBuildWithReport
+using System.Collections.Generic;
+public class GroupValuesBuildProcessor //: IPreprocessBuildWithReport
 {
-    public int callbackOrder => 0;
-   static ALoader loader = new ALoader();
+    const string DEFAULT_FOLDER = "Assets/Resources/LoadSystem/SavedFiles/Default";
 
-    public void OnPreprocessBuild(BuildReport report)
+    public int callbackOrder => 0;
+    static ALoader loader = new ALoader();
+    static Dictionary<string, GroupValues> BuildDefaultLookup()
     {
-        Debug.Log("=== GroupValues Pre-Build Reset ===");
+        var dict = new Dictionary<string, GroupValues>();
 
         var all = GroupValuesRegistry.GetAll();
 
         foreach (var gv in all)
         {
-            gv.ResetToDefaults();
-            EditorUtility.SetDirty(gv);
+            string path = AssetDatabase.GetAssetPath(gv);
 
-            ApplyJsonForGroupValues(gv);
+            if (!IsInDefaultFolder(path))
+                continue;
+
+            dict[gv.name] = gv; // clave por nombre
         }
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        // Editor PlayerPrefs (opcional)
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-
-        Debug.Log("GroupValues reset + JSON regenerated + PlayerPrefs cleared (Editor)");
+        return dict;
     }
+
+    // public void OnPreprocessBuild(BuildReport report)
+    // {
+    //     Debug.Log("=== GroupValues Pre-Build Reset ===");
+
+    //     var all = GroupValuesRegistry.GetAll();
+    //     var defaultLookup = BuildDefaultLookup();
+
+    //     foreach (var gv in all)
+    //     {
+    //         string path = AssetDatabase.GetAssetPath(gv);
+
+    //         if (IsInDefaultFolder(path))
+    //             continue;
+
+    //         if (defaultLookup.TryGetValue(gv.name, out var defaultGV))
+    //         {
+    //             CopyValues(defaultGV, gv);
+    //         }
+    //         else
+    //         {
+    //             gv.ResetToDefaults();
+    //         }
+
+    //         EditorUtility.SetDirty(gv);
+    //         ApplyJsonForGroupValues(gv);
+    //     }
+
+    //     AssetDatabase.SaveAssets();
+    //     AssetDatabase.Refresh();
+
+    //     PlayerPrefs.DeleteAll();
+    //     PlayerPrefs.Save();
+
+    //     Debug.Log("GroupValues processed with Default overrides");
+    // }
 
     static void ApplyJsonForGroupValues(GroupValues gv)
     {
@@ -42,12 +74,27 @@ public class GroupValuesBuildProcessor : IPreprocessBuildWithReport
         string name = Path.GetFileNameWithoutExtension(assetPath);
 
         loader.ChangeAssetName(name);
-
-        typeof(ALoader)
-            .GetField("values", BindingFlags.NonPublic | BindingFlags.Instance)
-            .SetValue(loader, gv);
-
+        loader.SaveValues(gv);
         loader.SaveValues();
     }
+    static bool IsInDefaultFolder(string assetPath)
+    {
+        return assetPath.Replace("\\", "/").StartsWith(DEFAULT_FOLDER);
+    }
+    static void CopyValues(GroupValues source, GroupValues target)
+{
+    
+    var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+    var fields = typeof(GroupValues).GetFields(flags);
+
+    foreach (var field in fields)
+    {
+        if (field.IsStatic) continue;
+
+        var value = field.GetValue(source);
+        field.SetValue(target, value);
+    }
+}
 }
 #endif

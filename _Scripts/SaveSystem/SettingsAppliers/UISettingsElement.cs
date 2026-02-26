@@ -1,4 +1,5 @@
 //using Character.Settings.RebindUI;
+using System;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace Character.Settings
         string keyValue = "";
         [SerializeField] VALUE_TYPE dataType;
         [SerializeField] UIElement uIElement;
+        ISettingsContainer container;
 
         public VALUE_TYPE DataType { get { return dataType; } }
         #region INSPECTOR
@@ -66,31 +68,23 @@ namespace Character.Settings
         }
         public void Init()
         {
-            var container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
+            container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
             .OfType<ISettingsContainer>()
             .FirstOrDefault();
             if (container != null)
             {
                 Debug.Log("Encontrado cambiando valores");
-                container.SubscribeToSettingsChange(OnValuesChange);
-                OnValuesChange();
+                //container.SubscribeToSettingsChange(LoadData);
+                LoadData();
             }
         }
 
-        public void SubscribeToValuesChange()
-        {
-            var container = FindFirstObjectByType<MonoBehaviour>() as ISettingsContainer;
-            container.SubscribeToSettingsChange(OnValuesChange);
-        }
         //To save data
         [ContextMenu("Save values")]
         public void SetValues()
         {
             string kValue = keyValue != "" ? keyValue : name;
-            var container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-           .OfType<ISettingsContainer>()
-           .FirstOrDefault();
-
+        
             switch (uIElement)
             {
                 case UIElement.TOGGLE:
@@ -127,13 +121,10 @@ namespace Character.Settings
             }
         }
         //To load data
-        public void OnValuesChange()
+        private void LoadData()
         {
             string kValue = keyValue != "" ? keyValue : name;
-            var container = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None)
-           .OfType<ISettingsContainer>()
-           .FirstOrDefault();
-
+         
             switch (uIElement)
             {
                 case UIElement.TOGGLE:
@@ -173,6 +164,54 @@ namespace Character.Settings
         }
 
 
+        public void OnValueChange(Action action)
+        {
+            switch (uIElement)
+            {
+                case UIElement.TOGGLE:
+                    var toggle = GetComponent<Toggle>();
+                    if (toggle)
+                    {
+
+                        toggle.onValueChanged.AddListener(_ => action());
+                    }
+                    break;
+                case UIElement.SLIDER:
+                    var slider = GetComponent<Slider>();
+                    if (slider)
+                    {
+
+                        slider.onValueChanged.AddListener(_ => action());
+                    }
+                    break;
+                case UIElement.DRAWER:
+                    var dropdown = GetComponent<Dropdown>();
+                    if (dropdown)
+                    {
+
+                        dropdown.onValueChanged.AddListener(_ => action());
+                    }
+                    break;
+                case UIElement.TMP_DRAWER:
+                    var dropdownTM = GetComponent<TMP_Dropdown>();
+                    if (dropdownTM)
+                    {
+
+                        dropdownTM.onValueChanged.AddListener(_ => action());
+                    }
+                    break;
+            }
+        }
+
+        public void OnValuesChange()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SubscribeToValuesChange()
+        {
+            throw new NotImplementedException();
+        }
     }
 
 
